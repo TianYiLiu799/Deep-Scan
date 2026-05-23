@@ -1,27 +1,13 @@
 name: Auto Crawl Python Intern Jobs
 
 on:
+  workflow_dispatch: # 允许网页上手动点击运行
   schedule:
-    # 3:00 AM UTC = 11:00 AM Beijing Time, every Monday
-    - cron: '0 3 * * 1'
-  workflow_dispatch:
-    inputs:
-      page_limit:
-        description: 'Max pages to scrape'
-        required: false
-        default: '3'
-      detail_limit:
-        description: 'Max detail pages to visit'
-        required: false
-        default: '20'
+    - cron: "0 3 * * 1" # 每周一凌晨自动运行
 
 jobs:
   crawl:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,26 +15,24 @@ jobs:
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install Python dependencies
-        run: pip install -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: Run data pipeline
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
-        run: python -m src.scraper
+        run: |
+          python -m src.scraper
 
       - name: Commit updated data
-        if: success()
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/jobs_cleaned.json data/jobs.json data/jobs_detailed.json
-          if git diff --staged --quiet; then
-            echo "No data changes — skip commit."
-          else
-            git commit -m "ci: auto-update job data [$(date -u +'%Y-%m-%d %H:%M UTC')]"
-            git push
-          fi
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update job data via pure python"
+          git push
