@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import re
 import sys
 import time
 from typing import Any, Dict, List, Optional, Tuple
@@ -128,6 +129,15 @@ class CloudScraper:
 
     # ── LLM ───────────────────────────────────────────────────────────────
 
+    @staticmethod
+    def _strip_markdown_fences(text: str) -> str:
+        """Remove ```json / ``` wrappers that LLMs sometimes add despite instructions."""
+        text = text.strip()
+        if text.startswith('```'):
+            text = re.sub(r'^```(?:json)?\s*\n?', '', text)
+            text = re.sub(r'\n?```\s*$', '', text)
+        return text.strip()
+
     def _call_llm(self, system_prompt: str, user_content: str) -> Dict[str, Any]:
         """Send content to LLM, return parsed JSON dict."""
         if not self.client:
@@ -149,12 +159,11 @@ class CloudScraper:
                 {'role': 'user', 'content': user_content},
             ],
             temperature=0.1,
-            response_format={'type': 'json_object'},
         )
         raw = response.choices[0].message.content
         if not raw:
             raise ValueError('LLM returned empty response')
-        return json.loads(raw)
+        return json.loads(self._strip_markdown_fences(raw))
 
     # ── Extraction ────────────────────────────────────────────────────────
 
