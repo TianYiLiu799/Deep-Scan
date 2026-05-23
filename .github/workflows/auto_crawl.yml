@@ -1,0 +1,58 @@
+name: Auto Crawl Python Intern Jobs
+
+on:
+  schedule:
+    # 3:00 AM UTC = 11:00 AM Beijing Time, every Monday
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      page_limit:
+        description: 'Max pages to scrape'
+        required: false
+        default: '3'
+      detail_limit:
+        description: 'Max detail pages to visit'
+        required: false
+        default: '20'
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright Chromium
+        run: playwright install chromium --with-deps
+
+      - name: Run data pipeline
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          HEADLESS: 'true'
+        run: python -m src.scraper
+
+      - name: Commit updated data
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/jobs_cleaned.json data/jobs.json data/jobs_detailed.json
+          if git diff --staged --quiet; then
+            echo "No data changes — skip commit."
+          else
+            git commit -m "ci: auto-update job data [$(date -u +'%Y-%m-%d %H:%M UTC')]"
+            git push
+          fi

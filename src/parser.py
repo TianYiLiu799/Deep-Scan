@@ -6,6 +6,9 @@ import re
 import os
 from typing import List, Dict, Any
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 

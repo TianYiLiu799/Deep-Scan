@@ -70,7 +70,7 @@ class InternshipScraper:
 
     def __init__(self, url: str = TARGET_URL, headless: bool = False, timeout: int = 60000):
         self.url = url
-        self.headless = headless
+        self.headless = headless or os.getenv('HEADLESS', '').lower() == 'true'
         self.timeout = timeout
         self.playwright: Optional[Playwright] = None
         self.browser: Optional[Browser] = None
