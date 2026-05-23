@@ -1,0 +1,39 @@
+# Deep-Scan Configuration File
+
+# Scraper Settings
+scraper:
+  timeout: 30
+  max_retries: 3
+  retry_delay: 2
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  
+# Proxy Settings (optional)
+proxy:
+  enabled: false
+  protocol: "http"
+  # proxy_list:
+  #   - "http://proxy1.example.com:8080"
+  #   - "http://proxy2.example.com:8080"
+
+# Rate Limiting
+rate_limiting:
+  enabled: true
+  requests_per_second: 1
+  delay_between_requests: 1
+
+# Data Processing
+processing:
+  encoding: "utf-8"
+  validate_urls: true
+  
+# Output Settings
+output:
+  format: "csv"  # csv, json, sqlite
+  directory: "data/processed"
+  
+# Logging
+logging:
+  level: "INFO"
+  file: "logs/deep_scan.log"
+  max_size: 10485760  # 10MB
+  backup_count: 5
